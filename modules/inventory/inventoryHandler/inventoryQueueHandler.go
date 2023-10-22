@@ -6,14 +6,14 @@ import (
 )
 
 type (
-	InventoryHttpHandlerService interface{}
+	InventoryQueueHandlerService interface{}
 
-	inventoryHttpHandler struct {
+	inventoryQueueHandler struct {
 		cfg              *config.Config
 		inventoryUsecase inventoryusecase.InventoryUsecaseService
 	}
 )
 
-func NewInventoryHttpHandler(cfg *config.Config, inventoryUsecase inventoryusecase.InventoryUsecaseService) InventoryHttpHandlerService {
-	return &inventoryHttpHandler{cfg, inventoryUsecase}
+func NewInventoryQueueHandler(cfg *config.Config, inventoryUsecase inventoryusecase.InventoryUsecaseService) InventoryQueueHandlerService {
+	return &inventoryQueueHandler{cfg, inventoryUsecase}
 }

@@ -6,14 +6,14 @@ import (
 )
 
 type (
-	PaymentHttpHandlerService interface{}
+	PaymentQueueHandlerService interface{}
 
-	paymentHttpHandler struct {
+	paymentQueueHandler struct {
 		cfg            *config.Config
 		paymentUsecase paymentusecase.PaymentUsecaseService
 	}
 )
 
-func NewPaymentHttpHandler(cfg *config.Config, paymentUsecase paymentusecase.PaymentUsecaseService) PaymentHttpHandlerService {
-	return &paymentHttpHandler{cfg, paymentUsecase}
+func NewPaymentQueueHandler(cfg *config.Config, paymentUsecase paymentusecase.PaymentUsecaseService) PaymentQueueHandlerService {
+	return &paymentQueueHandler{cfg, paymentUsecase}
 }
