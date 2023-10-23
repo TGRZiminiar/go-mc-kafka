@@ -7,6 +7,7 @@ import (
 
 	"github.com/TGRZiminiar/go-mc-kafka/config"
 	"github.com/TGRZiminiar/go-mc-kafka/pkg/database"
+	"github.com/TGRZiminiar/go-mc-kafka/server"
 )
 
 func main() {
@@ -23,5 +24,5 @@ func main() {
 	db := database.DbConn(ctx, &cfg)
 	defer db.Disconnect(ctx)
 
-	log.Println(db)
+	server.Start(ctx, &cfg, db)
 }
