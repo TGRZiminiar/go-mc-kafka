@@ -1,13 +1,33 @@
 package playerhandler
 
-import playerusecase "github.com/TGRZiminiar/go-mc-kafka/modules/player/playerUsecase"
+import (
+	"context"
+
+	playerPb "github.com/TGRZiminiar/go-mc-kafka/modules/player/playerPb"
+	playerusecase "github.com/TGRZiminiar/go-mc-kafka/modules/player/playerUsecase"
+)
 
 type (
-	playerGrpcHandlerService struct {
+	playerGrpcHandler struct {
+		playerPb.UnimplementedPlayerGrpcServiceServer
 		playerUsecase playerusecase.PlayerUsecaseService
 	}
 )
 
-func NewplayerGrpcHandler(playerUsecase playerusecase.PlayerUsecaseService) *playerGrpcHandlerService {
-	return &playerGrpcHandlerService{playerUsecase}
+func NewplayerGrpcHandler(playerUsecase playerusecase.PlayerUsecaseService) *playerGrpcHandler {
+	return &playerGrpcHandler{playerUsecase: playerUsecase}
+}
+
+func (g *playerGrpcHandler) CredentialSearch(ctx context.Context, req *playerPb.CredentialSearchReq) (*playerPb.PlayerProfile, error) {
+	return nil, nil
+}
+
+func (g *playerGrpcHandler) FindOnePlayerProfileToRefresh(ctx context.Context, req *playerPb.FindOnePlayerProfileToRefreshReq) (*playerPb.PlayerProfile, error) {
+
+	return nil, nil
+}
+
+func (g *playerGrpcHandler) GetPlayerSavingAccount(ctx context.Context, req *playerPb.GetPlayerSavingAccountReq) (*playerPb.GetPlayerSavingAccountRes, error) {
+	return nil, nil
+
 }
