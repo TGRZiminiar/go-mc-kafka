@@ -1,6 +1,7 @@
 package request
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/go-playground/validator/v10"
@@ -12,26 +13,29 @@ type (
 		Bind(data any) error
 	}
 
-	contextWrapepr struct {
-		Context  echo.Context
-		validaor *validator.Validate
+	contextWrapper struct {
+		Context   echo.Context
+		validator *validator.Validate
 	}
 )
 
 func NewContextWrapper(ctx echo.Context) contextWrapperService {
-	return &contextWrapepr{
-		Context:  ctx,
-		validaor: validator.New(),
+	return &contextWrapper{
+		Context:   ctx,
+		validator: validator.New(),
 	}
 }
 
-func (c contextWrapepr) Bind(data any) error {
+func (c *contextWrapper) Bind(data any) error {
 	if err := c.Context.Bind(data); err != nil {
 		log.Printf("Error: Bind data failed: %s", err.Error())
+		return fmt.Errorf("error: bind data failed: %s", err.Error())
 	}
 
-	if err := c.validaor.Struct(data); err != nil {
+	if err := c.validator.Struct(data); err != nil {
 		log.Printf("Error: Validate data failed: %s", err.Error())
+		return fmt.Errorf("error: validate data failed: %s", err.Error())
 	}
+
 	return nil
 }

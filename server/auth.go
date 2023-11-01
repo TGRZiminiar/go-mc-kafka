@@ -16,7 +16,7 @@ func (s *server) authService() {
 	authHttpHandler := authhandler.NewAuthHttpHandler(s.cfg, authUsecase)
 	authGrpcHandler := authhandler.NewAuthGrpcHandler(authUsecase)
 
-	// Grpc ckient
+	// Grpc client
 	go func() {
 		grpcServer, lis := grpcconn.NewGrpcServer(&s.cfg.Jwt, s.cfg.Grpc.AuthUrl)
 

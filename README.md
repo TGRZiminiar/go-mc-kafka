@@ -33,5 +33,8 @@ protoc --go_out=. --go_opt=paths=source_relative \
 ```
 go run ./pkg/database/script/migration.go ./env/dev/.env.auth
 go run ./pkg/database/script/migration.go ./env/dev/.env.player
+go run ./pkg/database/script/migration.go ./env/dev/.env.item
+go run ./pkg/database/script/migration.go ./env/dev/.env.payment
+go run ./pkg/database/script/migration.go ./env/dev/.env.inventory
 
 ```
