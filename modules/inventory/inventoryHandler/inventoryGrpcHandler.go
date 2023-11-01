@@ -1,6 +1,8 @@
 package inventoryhandler
 
 import (
+	"context"
+
 	inventoryPb "github.com/TGRZiminiar/go-mc-kafka/modules/inventory/inventoryPb"
 	inventoryusecase "github.com/TGRZiminiar/go-mc-kafka/modules/inventory/inventoryUsecase"
 )
@@ -16,6 +18,6 @@ func NewInventoryGrpcHandler(inventoryUsecase inventoryusecase.InventoryUsecaseS
 	return &inventoryGrpcHandler{inventoryUsecase: inventoryUsecase}
 }
 
-func (g *inventoryGrpcHandler) IsAvailableToSell(inventoryPb.IsAvailableToSellReq) (*inventoryPb.IsAvailableToSellRes, error) {
+func (g *inventoryGrpcHandler) IsAvailableToSell(ctx context.Context, req *inventoryPb.IsAvailableToSellReq) (*inventoryPb.IsAvailableToSellRes, error) {
 	return nil, nil
 }

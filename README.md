@@ -1,6 +1,8 @@
 ## Start Server Need two step
 #### 1. Start Docker Environment
-> docker compose -f docker-compose.db.yml up
+```
+docker compose -f docker-compose.db.yml up
+```
 
 #### 2. Select Environment File To Start Golang
 > go run main.go ./env/dev/.env.(anything)
@@ -8,6 +10,7 @@
 
 ### Command TO Genrate Proto
 ```
+export PATH="$PATH:$(go env GOPATH)/bin"
 Auth
 protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
@@ -24,4 +27,11 @@ inventory
 protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     ./modules/inventory/inventoryPb/inventoryPb.proto
+```
+
+### Command To Migrate
+```
+go run ./pkg/database/script/migration.go ./env/dev/.env.auth
+go run ./pkg/database/script/migration.go ./env/dev/.env.player
+
 ```

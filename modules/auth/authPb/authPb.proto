@@ -5,12 +5,11 @@ option go_package = "github.com/TGRZiminiar/go-mc-kafka";
 
 
 // Structures
-message CredentailSearchReq {
+message AccessTokenSearchReq {
     string accessToken = 1;
 
 }
-
-message CredentailSearchRes {
+message AccessTokenSearchRes {
     bool isValid = 1;
 
 }
@@ -26,6 +25,6 @@ message RolesCountRes {
 
 // Method
 service AuthGrpcService {
-    rpc CredentailSearch(CredentailSearchReq) returns (CredentailSearchRes);
+    rpc AccessTokenSearch(AccessTokenSearchReq) returns (AccessTokenSearchRes);
     rpc RolesCount(RolesCountReq) returns (RolesCountRes);
 }
