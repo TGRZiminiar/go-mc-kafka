@@ -6,6 +6,8 @@ import (
 	"log"
 	"time"
 
+	playerPb "github.com/TGRZiminiar/go-mc-kafka/modules/player/playerPb"
+
 	"github.com/TGRZiminiar/go-mc-kafka/modules/player"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/player/playerRepository"
 	"github.com/TGRZiminiar/go-mc-kafka/pkg/utils"
@@ -16,7 +18,9 @@ type (
 	PlayerUsecaseService interface {
 		CreatePlayer(pctx context.Context, req *player.CreatePlayerReq) (*player.PlayerProfile, error)
 		FindOnePlayerProfile(pctx context.Context, playerId string) (*player.PlayerProfile, error)
-		AddPlayerMoney(pctx context.Context, req *player.CreatePlayerTransactionReq) error
+		AddPlayerMoney(pctx context.Context, req *player.CreatePlayerTransactionReq) (*player.PlayerSavingAccount, error)
+		GetPlayerSavingAccount(pctx context.Context, playerId string) (*player.PlayerSavingAccount, error)
+		FindOnePlayerCredentail(pctx context.Context, password, email string) (*playerPb.PlayerProfile, error)
 	}
 
 	playerUsecase struct {
@@ -82,14 +86,50 @@ func (u *playerUsecase) FindOnePlayerProfile(pctx context.Context, playerId stri
 	}, nil
 }
 
-func (u *playerUsecase) AddPlayerMoney(pctx context.Context, req *player.CreatePlayerTransactionReq) error {
+func (u *playerUsecase) AddPlayerMoney(pctx context.Context, req *player.CreatePlayerTransactionReq) (*player.PlayerSavingAccount, error) {
 	_, err := u.playerRepository.InsertOnePlayerTransaction(pctx, &player.PlayerTransaction{
 		PlayerId:  req.PlayerId,
 		Amount:    req.Amount,
 		CreatedAt: utils.LocalTime(),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return u.playerRepository.GetPlayerSavingAccount(pctx, req.PlayerId)
+}
+
+func (u *playerUsecase) GetPlayerSavingAccount(pctx context.Context, playerId string) (*player.PlayerSavingAccount, error) {
+	return u.playerRepository.GetPlayerSavingAccount(pctx, playerId)
+}
+
+func (u *playerUsecase) FindOnePlayerCredentail(pctx context.Context, password, email string) (*playerPb.PlayerProfile, error) {
+
+	result, err := u.playerRepository.FindOnePlayerCredentail(pctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(password)); err != nil {
+		return nil, errors.New("error: password invalid")
+	}
+
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		log.Printf("Error: FindOnePlayerProfile: %s", err.Error())
+		return nil, errors.New("error: failed to load location")
+	}
+
+	roleCode := 0
+	for _, v := range result.PlayerRoles {
+		roleCode += v.RoleCode
+	}
+
+	return &playerPb.PlayerProfile{
+		Id:        result.Id.Hex(),
+		Email:     result.Email,
+		RoleCode:  int32(roleCode),
+		Username:  result.Username,
+		CreatedAt: result.CreatedAt.In(loc).String(),
+		UpdatedAt: result.UpdatedAt.In(loc).String(),
+	}, nil
 }

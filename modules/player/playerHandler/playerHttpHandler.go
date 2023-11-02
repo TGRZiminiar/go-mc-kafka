@@ -2,7 +2,6 @@ package playerhandler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -19,6 +18,7 @@ type (
 		CreatePlayer(c echo.Context) error
 		FindOnePlayerProfile(c echo.Context) error
 		AddPlayerMoney(c echo.Context) error
+		GetPlayerSavingAccount(c echo.Context) error
 	}
 
 	playerHttpHandler struct {
@@ -66,22 +66,32 @@ func (h *playerHttpHandler) FindOnePlayerProfile(c echo.Context) error {
 
 func (h *playerHttpHandler) AddPlayerMoney(c echo.Context) error {
 	ctx := context.Background()
-	fmt.Println("hello world")
 	wrapper := request.NewContextWrapper(c)
 
 	req := new(player.CreatePlayerTransactionReq)
 
 	if err := wrapper.Bind(req); err != nil {
-		fmt.Println("Something Weonge", err)
-		fmt.Println("Fuckerrrr")
 		return response.ErrResponse(c, http.StatusBadRequest, err.Error())
 	}
 
-	err := h.playerUsecase.AddPlayerMoney(ctx, req)
+	res, err := h.playerUsecase.AddPlayerMoney(ctx, req)
 	if err != nil {
-		fmt.Println("Something Weong2e", err)
 		return response.ErrResponse(c, http.StatusBadRequest, err.Error())
 	}
 
-	return response.SuccessResponse(c, http.StatusOK, map[string]any{"msg": "success"})
+	return response.SuccessResponse(c, http.StatusCreated, res)
+}
+
+func (h *playerHttpHandler) GetPlayerSavingAccount(c echo.Context) error {
+	ctx := context.Background()
+
+	playerId := c.Param("player_id")
+
+	res, err := h.playerUsecase.GetPlayerSavingAccount(ctx, playerId)
+	if err != nil {
+		return response.ErrResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	return response.SuccessResponse(c, http.StatusOK, res)
+
 }
