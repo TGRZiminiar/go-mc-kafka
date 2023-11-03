@@ -21,6 +21,7 @@ type (
 		AddPlayerMoney(pctx context.Context, req *player.CreatePlayerTransactionReq) (*player.PlayerSavingAccount, error)
 		GetPlayerSavingAccount(pctx context.Context, playerId string) (*player.PlayerSavingAccount, error)
 		FindOnePlayerCredentail(pctx context.Context, password, email string) (*playerPb.PlayerProfile, error)
+		FindOnePlayerProfileToRefresh(pctx context.Context, playerId string) (*playerPb.PlayerProfile, error)
 	}
 
 	playerUsecase struct {
@@ -129,6 +130,28 @@ func (u *playerUsecase) FindOnePlayerCredentail(pctx context.Context, password, 
 		Email:     result.Email,
 		RoleCode:  int32(roleCode),
 		Username:  result.Username,
+		CreatedAt: result.CreatedAt.In(loc).String(),
+		UpdatedAt: result.UpdatedAt.In(loc).String(),
+	}, nil
+}
+func (u *playerUsecase) FindOnePlayerProfileToRefresh(pctx context.Context, playerId string) (*playerPb.PlayerProfile, error) {
+	result, err := u.playerRepository.FindOnePlayerProfileToRefresh(pctx, playerId)
+	if err != nil {
+		return nil, err
+	}
+
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+
+	var rolesCode int = 0
+	for _, v := range result.PlayerRoles {
+		rolesCode += v.RoleCode
+	}
+
+	return &playerPb.PlayerProfile{
+		Id:        result.Id.Hex(),
+		Email:     result.Email,
+		Username:  result.Username,
+		RoleCode:  int32(rolesCode),
 		CreatedAt: result.CreatedAt.In(loc).String(),
 		UpdatedAt: result.UpdatedAt.In(loc).String(),
 	}, nil

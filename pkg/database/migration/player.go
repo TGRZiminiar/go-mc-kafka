@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func playerDbConn(pctx context.Context, cfg *config.Config) *mongo.Database {
@@ -51,12 +52,14 @@ func PlayerMigrate(pctx context.Context, cfg *config.Config) {
 		log.Printf("Indexs: %s", index)
 	}
 
+	hashPassword, _ := bcrypt.GenerateFromPassword([]byte("123"), bcrypt.DefaultCost)
+
 	// roles data
 	document := func() []any {
 		roles := []*player.Player{
 			{
 				Email:    "player001@gmail.com",
-				Password: "123",
+				Password: string(hashPassword),
 				Username: "player001",
 				PlayerRoles: []player.PlayerRole{
 					{
@@ -69,7 +72,7 @@ func PlayerMigrate(pctx context.Context, cfg *config.Config) {
 			},
 			{
 				Email:    "player002@gmail.com",
-				Password: "123",
+				Password: string(hashPassword),
 				Username: "player002",
 				PlayerRoles: []player.PlayerRole{
 					{
@@ -82,7 +85,7 @@ func PlayerMigrate(pctx context.Context, cfg *config.Config) {
 			},
 			{
 				Email:    "player003@gmail.com",
-				Password: "123",
+				Password: string(hashPassword),
 				Username: "player003",
 				PlayerRoles: []player.PlayerRole{
 					{
@@ -95,7 +98,7 @@ func PlayerMigrate(pctx context.Context, cfg *config.Config) {
 			},
 			{
 				Email:    "admin@gmail.com",
-				Password: "123",
+				Password: string(hashPassword),
 				Username: "admin",
 				PlayerRoles: []player.PlayerRole{
 					{

@@ -26,13 +26,13 @@ func (s *server) authService() {
 		grpcServer.Serve(lis)
 	}()
 
-	_ = authHttpHandler
-	_ = authGrpcHandler
-
 	auth := s.app.Group("/auth_v1")
 
 	// HealthCheck
 
+	// auth.GET("", s.middleware.JwtAuthorization(s.middleware.RbacAuthorization(s.healthCheckService, []int{1, 0})))
 	auth.GET("", s.healthCheckService)
-
+	auth.POST("/auth/login", authHttpHandler.Login)
+	auth.POST("/auth/refresh-token", authHttpHandler.RefreshToken)
+	auth.POST("/auth/logout", authHttpHandler.Logout)
 }
