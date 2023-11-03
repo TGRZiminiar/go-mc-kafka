@@ -13,6 +13,7 @@ import (
 	middlewarehandler "github.com/TGRZiminiar/go-mc-kafka/modules/middleware/middlewareHandler"
 	middlewarerepository "github.com/TGRZiminiar/go-mc-kafka/modules/middleware/middlewareRepository"
 	middlewareusecase "github.com/TGRZiminiar/go-mc-kafka/modules/middleware/middlewareUsecase"
+	"github.com/TGRZiminiar/go-mc-kafka/pkg/jwtauth"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -63,6 +64,8 @@ func Start(pctx context.Context, cfg *config.Config, db *mongo.Client) {
 		cfg:        cfg,
 		middleware: newMiddleware(cfg),
 	}
+
+	jwtauth.SetApiKey(cfg.Jwt.ApiSecretKey)
 
 	// Basic Middleware
 

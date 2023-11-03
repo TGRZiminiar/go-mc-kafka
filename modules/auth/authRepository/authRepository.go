@@ -9,6 +9,7 @@ import (
 	"github.com/TGRZiminiar/go-mc-kafka/modules/auth"
 	playerPb "github.com/TGRZiminiar/go-mc-kafka/modules/player/playerPb"
 	grpcconn "github.com/TGRZiminiar/go-mc-kafka/pkg/grpcConn"
+	"github.com/TGRZiminiar/go-mc-kafka/pkg/jwtauth"
 	"github.com/TGRZiminiar/go-mc-kafka/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -44,6 +45,7 @@ func (r *authRepository) CredentialSearch(pctx context.Context, grpcUrl string, 
 	ctx, cancel := context.WithTimeout(pctx, 30*time.Second)
 	defer cancel()
 
+	jwtauth.SetApiKeyInContext(&ctx)
 	conn, err := grpcconn.NewGrpcClient(grpcUrl)
 	if err != nil {
 		log.Printf("Error: Grpc Conn Error %s", err.Error())
@@ -98,6 +100,7 @@ func (r *authRepository) FindOnePlayerProfileToRefresh(pctx context.Context, grp
 	ctx, cancel := context.WithTimeout(pctx, 30*time.Second)
 	defer cancel()
 
+	jwtauth.SetApiKeyInContext(&ctx)
 	conn, err := grpcconn.NewGrpcClient(grpcUrl)
 	if err != nil {
 		log.Printf("Error: Grpc Conn Error %s", err.Error())
