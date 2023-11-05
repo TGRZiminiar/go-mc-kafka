@@ -34,4 +34,7 @@ func (s *server) itemService() {
 	item.GET("", s.healthCheckService)
 	item.POST("/create-item", s.middleware.JwtAuthorization(s.middleware.RbacAuthorization(itemHttpHandler.CreateItem, []int{1, 0})))
 	item.GET("/item/:itemId", itemHttpHandler.FindOneItem)
+	item.GET("/item", itemHttpHandler.FindManyItems)
+	item.PATCH("/item/:itemId", s.middleware.JwtAuthorization(s.middleware.RbacAuthorization(itemHttpHandler.EditItem, []int{1, 0})))
+	item.PATCH("/item/:itemId/is-activated", s.middleware.JwtAuthorization(s.middleware.RbacAuthorization(itemHttpHandler.EnableOrDisableItem, []int{1, 0})))
 }
