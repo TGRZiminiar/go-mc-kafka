@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/TGRZiminiar/go-mc-kafka/modules/item"
+	itemPb "github.com/TGRZiminiar/go-mc-kafka/modules/item/itemPb"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/item/itemRepository"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/models"
 	"github.com/TGRZiminiar/go-mc-kafka/pkg/utils"
@@ -23,6 +24,7 @@ type (
 		FindManyItem(pctx context.Context, basePaginateUrl string, req *item.ItemSearchReq) (*models.PaginateRes, error)
 		EditItem(pctx context.Context, itemId string, req *item.ItemUpdateReq) (*item.ItemShowCase, error)
 		EnableOrDisableItem(pctx context.Context, itemId string) (bool, error)
+		FindItemInIds(pctx context.Context, req *itemPb.FindItemsInIdsReq) (*itemPb.FindItemsInIdsRes, error)
 	}
 
 	itemUsecase struct {
@@ -176,4 +178,36 @@ func (u *itemUsecase) EnableOrDisableItem(pctx context.Context, itemId string) (
 	}
 
 	return !result.UsageStatus, nil
+}
+
+func (u *itemUsecase) FindItemInIds(pctx context.Context, req *itemPb.FindItemsInIdsReq) (*itemPb.FindItemsInIdsRes, error) {
+	filter := bson.D{}
+
+	objectIds := make([]primitive.ObjectID, 0)
+	for _, itemId := range req.Ids {
+		objectIds = append(objectIds, utils.ConvertToObjectId(strings.TrimPrefix(itemId, "item:")))
+	}
+
+	filter = append(filter, bson.E{"_id", bson.D{{"$in", objectIds}}})
+
+	results, err := u.itemRepository.FindManyItem(pctx, filter, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resultToRes := make([]*itemPb.Item, 0)
+	for _, result := range results {
+		resultToRes = append(resultToRes, &itemPb.Item{
+			Id:       result.ItemId,
+			Title:    result.Title,
+			Price:    result.Price,
+			ImageUrl: result.ImageUrl,
+			Damage:   int32(result.Damage),
+		})
+	}
+
+	return &itemPb.FindItemsInIdsRes{
+		Items: resultToRes,
+	}, nil
+
 }
