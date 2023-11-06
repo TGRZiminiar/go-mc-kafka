@@ -9,6 +9,7 @@ import (
 	"github.com/TGRZiminiar/go-mc-kafka/config"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/inventory"
 	itemPb "github.com/TGRZiminiar/go-mc-kafka/modules/item/itemPb"
+	"github.com/TGRZiminiar/go-mc-kafka/modules/models"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/payment"
 	grpcconn "github.com/TGRZiminiar/go-mc-kafka/pkg/grpcConn"
 	"github.com/TGRZiminiar/go-mc-kafka/pkg/jwtauth"
@@ -30,6 +31,8 @@ type (
 		DeleteOneInventory(pctx context.Context, inventoryId string) error
 		FindOnePlayerItem(pctx context.Context, playerId, itemId string) bool
 		DeleteOnePlayerItem(pctx context.Context, playerId, itemId string) error
+		GetOffset(pctx context.Context) (int64, error)
+		UpserOffset(pctx context.Context, offset int64) error
 	}
 
 	inventoryRepository struct {
@@ -225,6 +228,41 @@ func (r *inventoryRepository) RemovePlayerItemRes(pctx context.Context, cfg *con
 	// 	log.Printf("Error: RemovePlayerItemRes failed: %s", err.Error())
 	// 	return errors.New("error: docked player money res failed")
 	// }
+
+	return nil
+}
+
+// Kafka Func
+
+func (r *inventoryRepository) GetOffset(pctx context.Context) (int64, error) {
+	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
+	defer cancel()
+
+	db := r.inventoryDbConn(ctx)
+	col := db.Collection("players_inventory_queue")
+
+	result := new(models.KafkaOffset)
+	if err := col.FindOne(ctx, bson.M{}).Decode(result); err != nil {
+		log.Printf("Error: GetOffset failed: %s", err.Error())
+		return -1, errors.New("error: GetOffset failed")
+	}
+
+	return result.Offset, nil
+}
+
+func (r *inventoryRepository) UpserOffset(pctx context.Context, offset int64) error {
+	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
+	defer cancel()
+
+	db := r.inventoryDbConn(ctx)
+	col := db.Collection("players_inventory_queue")
+
+	result, err := col.UpdateOne(ctx, bson.M{}, bson.M{"$set": bson.M{"offset": offset}}, options.Update().SetUpsert(true))
+	if err != nil {
+		log.Printf("Error: UpserOffset failed: %s", err.Error())
+		return errors.New("error: UpserOffset failed")
+	}
+	log.Printf("Info: UpserOffset result: %v", result)
 
 	return nil
 }

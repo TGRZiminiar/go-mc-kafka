@@ -6,6 +6,9 @@ import (
 	"log"
 	"time"
 
+	"github.com/TGRZiminiar/go-mc-kafka/config"
+	"github.com/TGRZiminiar/go-mc-kafka/modules/models"
+	"github.com/TGRZiminiar/go-mc-kafka/modules/payment"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/player"
 	"github.com/TGRZiminiar/go-mc-kafka/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,6 +19,8 @@ import (
 
 type (
 	PlayerRepositoryService interface {
+		GetOffset(pctx context.Context) (int64, error)
+		UpserOffset(pctx context.Context, offset int64) error
 		IsUniquePlayer(pctx context.Context, email, username string) bool
 		InsertOnePlayer(pctx context.Context, req *player.Player) (primitive.ObjectID, error)
 		FindOnePlayerProfile(pctx context.Context, playerId string) (*player.PlayerProfileBson, error)
@@ -23,6 +28,8 @@ type (
 		GetPlayerSavingAccount(pctx context.Context, playerId string) (*player.PlayerSavingAccount, error)
 		FindOnePlayerCredentail(pctx context.Context, email string) (*player.Player, error)
 		FindOnePlayerProfileToRefresh(pctx context.Context, playerId string) (*player.Player, error)
+		DeleteOnePlayerTransaction(pctx context.Context, transactionId string) error
+		DockedPlayerMoneyRes(pctx context.Context, cfg *config.Config, req *payment.PaymentTransferRes) error
 	}
 
 	playerRepository struct {
@@ -193,4 +200,55 @@ func (r *playerRepository) FindOnePlayerProfileToRefresh(pctx context.Context, p
 	}
 
 	return result, nil
+}
+
+// kafka Func
+
+func (r *playerRepository) GetOffset(pctx context.Context) (int64, error) {
+	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
+	defer cancel()
+
+	db := r.playerDbConn(ctx)
+	col := db.Collection("player_transactions_queue")
+
+	result := new(models.KafkaOffset)
+	if err := col.FindOne(ctx, bson.M{}).Decode(result); err != nil {
+		log.Printf("Error: GetOffset failed: %s", err.Error())
+		return -1, errors.New("error: GetOffset failed")
+	}
+
+	return result.Offset, nil
+}
+
+func (r *playerRepository) UpserOffset(pctx context.Context, offset int64) error {
+	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
+	defer cancel()
+
+	db := r.playerDbConn(ctx)
+	col := db.Collection("player_transactions_queue")
+
+	result, err := col.UpdateOne(ctx, bson.M{}, bson.M{"$set": bson.M{"offset": offset}}, options.Update().SetUpsert(true))
+	if err != nil {
+		log.Printf("Error: UpserOffset failed: %s", err.Error())
+		return errors.New("error: UpserOffset failed")
+	}
+	log.Printf("Info: UpserOffset result: %v", result)
+
+	return nil
+}
+
+func (r *playerRepository) DeleteOnePlayerTransaction(pctx context.Context, transactionId string) error {
+	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
+	defer cancel()
+
+	db := r.playerDbConn(ctx)
+	col := db.Collection("player_transactions")
+	result, err := col.DeleteOne(ctx, bson.M{"_id": utils.ConvertToObjectId(transactionId)})
+	if err != nil {
+		log.Printf("Error: DeleteOnePlayerTransaction failed: %s", err.Error())
+		return errors.New("error: deleteoneplayertransaction failed")
+	}
+
+	log.Printf("Delete Result: %v", result)
+	return nil
 }

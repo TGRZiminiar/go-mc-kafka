@@ -19,8 +19,8 @@ import (
 
 type (
 	InventoryUsecaseService interface {
-		// GetOffset(pctx context.Context) (int64, error)
-		// UpserOffset(pctx context.Context, offset int64) error
+		GetOffset(pctx context.Context) (int64, error)
+		UpserOffset(pctx context.Context, offset int64) error
 		FindPlayerItems(pctx context.Context, cfg *config.Config, playerId string, req *inventory.InventorySearchReq) (*models.PaginateRes, error)
 		AddPlayerItemRes(pctx context.Context, cfg *config.Config, req *inventory.UpdateInventoryReq)
 		RemovePlayerItemRes(pctx context.Context, cfg *config.Config, req *inventory.UpdateInventoryReq)
@@ -37,12 +37,12 @@ func NewInventoryUsecase(inventoryRepository inventoryrepository.InventoryReposi
 	return &inventoryUsecase{inventoryRepository}
 }
 
-// func (u *inventoryUsecase) GetOffset(pctx context.Context) (int64, error) {
-// 	return u.inventoryRepository.GetOffset(pctx)
-// }
-// func (u *inventoryUsecase) UpserOffset(pctx context.Context, offset int64) error {
-// 	return u.inventoryRepository.UpserOffset(pctx, offset)
-// }
+func (u *inventoryUsecase) GetOffset(pctx context.Context) (int64, error) {
+	return u.inventoryRepository.GetOffset(pctx)
+}
+func (u *inventoryUsecase) UpserOffset(pctx context.Context, offset int64) error {
+	return u.inventoryRepository.UpserOffset(pctx, offset)
+}
 
 func (u *inventoryUsecase) FindPlayerItems(pctx context.Context, cfg *config.Config, playerId string, req *inventory.InventorySearchReq) (*models.PaginateRes, error) {
 	// Filter
