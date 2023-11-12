@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/TGRZiminiar/go-mc-kafka/config"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/auth"
 	playerPb "github.com/TGRZiminiar/go-mc-kafka/modules/player/playerPb"
 	grpcconn "github.com/TGRZiminiar/go-mc-kafka/pkg/grpcConn"
@@ -26,6 +27,8 @@ type (
 		DeleteOnePlayerCredential(pctx context.Context, credentialId string) (int64, error)
 		FindOneAccessToken(pctx context.Context, accessToken string) (*auth.Credential, error)
 		RolesCount(pctx context.Context) (int64, error)
+		AccessToken(cfg *config.Config, cliams *jwtauth.Claims) string
+		RefreshToken(cfg *config.Config, cliams *jwtauth.Claims) string
 	}
 
 	authRepository struct {
@@ -68,6 +71,9 @@ func (r *authRepository) InsertOnePlayerCredential(pctx context.Context, req *au
 
 	db := r.authDbConn(ctx)
 	col := db.Collection("auth")
+
+	req.CreatedAt = utils.LocalTime()
+	req.UpdatedAt = utils.LocalTime()
 
 	result, err := col.InsertOne(ctx, req)
 	if err != nil {
@@ -197,4 +203,20 @@ func (r *authRepository) RolesCount(pctx context.Context) (int64, error) {
 	}
 
 	return count, nil
+}
+
+func (r *authRepository) AccessToken(cfg *config.Config, cliams *jwtauth.Claims) string {
+	return jwtauth.NewAccessToken(cfg.Jwt.AccessSecretKey, cfg.Jwt.AccessDuration, &jwtauth.Claims{
+		PlayerId: cliams.PlayerId,
+		RoleCode: int(cliams.RoleCode),
+	}).SignToken()
+
+}
+
+func (r *authRepository) RefreshToken(cfg *config.Config, cliams *jwtauth.Claims) string {
+	return jwtauth.NewRefreshToken(cfg.Jwt.RefreshSecretKey, cfg.Jwt.RefreshDuration, &jwtauth.Claims{
+		PlayerId: cliams.PlayerId,
+		RoleCode: int(cliams.RoleCode),
+	}).SignToken()
+
 }

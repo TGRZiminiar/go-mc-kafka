@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-deployment
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: auth
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      volumes:
+      - name: app-env
+        configMap:
+          name: app-env
+      containers:
+        - name: auth
+          image: dockerhub_username/image_name:tag
+          ports:
+          #// Port ที่ Set ให้ในตัว App
+            - containerPort: 8080
+              protocol: TCP
+            ##// Port ที่ Set ให้ในตัว App
+            - containerPort: 3000
+              protocol: TCP
+          volumeMounts:
+          - name: app-env
+            mountPath: /etc/env
+          env:
+          - name: ENV_1
+            value: "value_1"
+          - name: ENV_2
+            value: "value_2"

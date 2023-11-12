@@ -2,6 +2,7 @@ package inventoryrepository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/TGRZiminiar/go-mc-kafka/modules/payment"
 	grpcconn "github.com/TGRZiminiar/go-mc-kafka/pkg/grpcConn"
 	"github.com/TGRZiminiar/go-mc-kafka/pkg/jwtauth"
+	"github.com/TGRZiminiar/go-mc-kafka/pkg/queue"
 	"github.com/TGRZiminiar/go-mc-kafka/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -155,28 +157,6 @@ func (r *inventoryRepository) DeleteOneInventory(pctx context.Context, inventory
 	return nil
 }
 
-func (r *inventoryRepository) AddPlayerItemRes(pctx context.Context, cfg *config.Config, req *payment.PaymentTransferRes) error {
-	// reqInBytes, err := json.Marshal(req)
-	// if err != nil {
-	// 	log.Printf("Error: AddPlayerItemRes failed: %s", err.Error())
-	// 	return errors.New("error: docked player money res failed")
-	// }
-
-	// if err := queue.PushMessageWithKeyToQueue(
-	// 	[]string{cfg.Kafka.Url},
-	// 	cfg.Kafka.ApiKey,
-	// 	cfg.Kafka.Secret,
-	// 	"payment",
-	// 	"buy",
-	// 	reqInBytes,
-	// ); err != nil {
-	// 	log.Printf("Error: AddPlayerItemRes failed: %s", err.Error())
-	// 	return errors.New("error: docked player money res failed")
-	// }
-
-	return nil
-}
-
 func (r *inventoryRepository) FindOnePlayerItem(pctx context.Context, playerId, itemId string) bool {
 	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
 	defer cancel()
@@ -210,24 +190,46 @@ func (r *inventoryRepository) DeleteOnePlayerItem(pctx context.Context, playerId
 	return nil
 }
 
-func (r *inventoryRepository) RemovePlayerItemRes(pctx context.Context, cfg *config.Config, req *payment.PaymentTransferRes) error {
-	// reqInBytes, err := json.Marshal(req)
-	// if err != nil {
-	// 	log.Printf("Error: RemovePlayerItemRes failed: %s", err.Error())
-	// 	return errors.New("error: docked player money res failed")
-	// }
+func (r *inventoryRepository) AddPlayerItemRes(pctx context.Context, cfg *config.Config, req *payment.PaymentTransferRes) error {
+	reqInBytes, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error: AddPlayerItemRes failed: %s", err.Error())
+		return errors.New("error: docked player money res failed")
+	}
 
-	// if err := queue.PushMessageWithKeyToQueue(
-	// 	[]string{cfg.Kafka.Url},
-	// 	cfg.Kafka.ApiKey,
-	// 	cfg.Kafka.Secret,
-	// 	"payment",
-	// 	"sell",
-	// 	reqInBytes,
-	// ); err != nil {
-	// 	log.Printf("Error: RemovePlayerItemRes failed: %s", err.Error())
-	// 	return errors.New("error: docked player money res failed")
-	// }
+	if err := queue.PushMessageWithKeyToQueue(
+		[]string{cfg.Kafka.Url},
+		cfg.Kafka.ApiKey,
+		cfg.Kafka.Secret,
+		"payment",
+		"buy",
+		reqInBytes,
+	); err != nil {
+		log.Printf("Error: AddPlayerItemRes failed: %s", err.Error())
+		return errors.New("error: docked player money res failed")
+	}
+
+	return nil
+}
+
+func (r *inventoryRepository) RemovePlayerItemRes(pctx context.Context, cfg *config.Config, req *payment.PaymentTransferRes) error {
+	reqInBytes, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error: RemovePlayerItemRes failed: %s", err.Error())
+		return errors.New("error: docked player money res failed")
+	}
+
+	if err := queue.PushMessageWithKeyToQueue(
+		[]string{cfg.Kafka.Url},
+		cfg.Kafka.ApiKey,
+		cfg.Kafka.Secret,
+		"payment",
+		"sell",
+		reqInBytes,
+	); err != nil {
+		log.Printf("Error: RemovePlayerItemRes failed: %s", err.Error())
+		return errors.New("error: docked player money res failed")
+	}
 
 	return nil
 }

@@ -35,11 +35,9 @@ func newMiddleware(cfg *config.Config) middlewarehandler.MiddlewareHandlerServic
 }
 
 func (s *server) gracefulShutdown(pctx context.Context, quit <-chan os.Signal) {
-
-	log.Printf("Starting service: %s", s.cfg.App.Name)
+	log.Printf("Start service: %s", s.cfg.App.Name)
 
 	<-quit
-
 	log.Printf("Shutting down service: %s", s.cfg.App.Name)
 
 	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
@@ -48,7 +46,6 @@ func (s *server) gracefulShutdown(pctx context.Context, quit <-chan os.Signal) {
 	if err := s.app.Shutdown(ctx); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
-
 }
 
 func (s *server) httpListening() {
@@ -68,19 +65,18 @@ func Start(pctx context.Context, cfg *config.Config, db *mongo.Client) {
 	jwtauth.SetApiKey(cfg.Jwt.ApiSecretKey)
 
 	// Basic Middleware
-
 	// Request Timeout
 	s.app.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		Skipper:      middleware.DefaultSkipper,
-		Timeout:      30 * time.Second,
 		ErrorMessage: "Error: Request Timeout",
+		Timeout:      30 * time.Second,
 	}))
 
-	// Cors
+	// CORS
 	s.app.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		Skipper:      middleware.DefaultSkipper,
 		AllowOrigins: []string{"*"},
-		AllowMethods: []string{echo.GET, echo.PATCH, echo.POST, echo.PUT, echo.DELETE},
+		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.PATCH, echo.DELETE},
 	}))
 
 	// Body Limit
@@ -109,5 +105,4 @@ func Start(pctx context.Context, cfg *config.Config, db *mongo.Client) {
 
 	// Listening
 	s.httpListening()
-
 }

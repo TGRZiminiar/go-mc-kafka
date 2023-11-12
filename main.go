@@ -12,10 +12,9 @@ import (
 
 func main() {
 	ctx := context.Background()
-	_ = ctx
 
 	cfg := config.LoadConfig(func() string {
-		if len(os.Args) < 1 {
+		if len(os.Args) < 2 {
 			log.Fatal("Error: .env path is invalid")
 		}
 		return os.Args[1]

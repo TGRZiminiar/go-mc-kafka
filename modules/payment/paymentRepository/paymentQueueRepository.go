@@ -15,7 +15,7 @@ func (r *paymentRepository) DockedPlayerMoney(pctx context.Context, cfg *config.
 
 	reqInBytes, err := json.Marshal(req)
 	if err != nil {
-		log.Printf("Error: DockedPlayerMoney Failed %s", err.Error())
+		log.Printf("Error: DockedPlayerMoney Queue Repository failed: %s", err.Error())
 		return errors.New("error: docked player money failed")
 	}
 
@@ -27,18 +27,18 @@ func (r *paymentRepository) DockedPlayerMoney(pctx context.Context, cfg *config.
 		"buy",
 		reqInBytes,
 	); err != nil {
-		log.Printf("Error: DockedPlayerMoney Failed %s", err.Error())
+		log.Printf("Error: DockedPlayerMoney Queue Repository failed: %s", err.Error())
 		return errors.New("error: docked player money failed")
 	}
 
 	return nil
 }
 
-func (r *paymentRepository) RollBackDockedPlayerMoney(pctx context.Context, cfg *config.Config, req *player.CreatePlayerTransactionReq) error {
+func (r *paymentRepository) RollBackTransaction(pctx context.Context, cfg *config.Config, req *player.RollbackPlayerTransactionReq) error {
 
 	reqInBytes, err := json.Marshal(req)
 	if err != nil {
-		log.Printf("Error: RollBackDockedPlayerMoney Failed %s", err.Error())
+		log.Printf("Error: RollBackTransaction Failed %s", err.Error())
 		return errors.New("error: roll back docked player money failed")
 	}
 
@@ -50,7 +50,7 @@ func (r *paymentRepository) RollBackDockedPlayerMoney(pctx context.Context, cfg 
 		"rtransaction",
 		reqInBytes,
 	); err != nil {
-		log.Printf("Error: RollBackDockedPlayerMoney Failed %s", err.Error())
+		log.Printf("Error: RollBackTransaction Failed %s", err.Error())
 		return errors.New("error: roll back docked player money failed")
 	}
 

@@ -24,7 +24,7 @@ type (
 		UpsertOffset(pctx context.Context, offset int64) error
 		FindItemInIds(pctx context.Context, grpcUrl string, req *itemPb.FindItemsInIdsReq) (*itemPb.FindItemsInIdsRes, error)
 		DockedPlayerMoney(pctx context.Context, cfg *config.Config, req *player.CreatePlayerTransactionReq) error
-		RollBackDockedPlayerMoney(pctx context.Context, cfg *config.Config, req *player.CreatePlayerTransactionReq) error
+		RollBackTransaction(pctx context.Context, cfg *config.Config, req *player.RollbackPlayerTransactionReq) error
 	}
 
 	paymentRepository struct {

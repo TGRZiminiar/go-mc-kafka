@@ -13,6 +13,7 @@ import (
 
 // Producer that produce message to kafka
 // This func will produce to BuyOrSellConsumer Func in paymentusecase.go
+// Return A Message
 func (r *playerRepository) DockedPlayerMoneyRes(pctx context.Context, cfg *config.Config, req *payment.PaymentTransferRes) error {
 	reqInBytes, err := json.Marshal(req)
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	itemPb "github.com/TGRZiminiar/go-mc-kafka/modules/item/itemPb"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/payment"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/payment/paymentRepository"
+	"github.com/TGRZiminiar/go-mc-kafka/modules/player"
 	"github.com/TGRZiminiar/go-mc-kafka/pkg/queue"
 )
 
@@ -21,6 +22,8 @@ type (
 		FindItemsInIds(pctx context.Context, grpcUrl string, req []*payment.ItemServiceReqDatum) error
 		PaymentConsumer(pctx context.Context, cfg *config.Config) (sarama.PartitionConsumer, error)
 		BuyOrSellItemConsumer(pctx context.Context, key string, cfg *config.Config, resCh chan<- *payment.PaymentTransferRes)
+		BuyItem(pctx context.Context, cfg *config.Config, req *payment.ItemServiceReq, playerId string) ([]*payment.PaymentTransferRes, error)
+		SellItem(pctx context.Context, cfg *config.Config, req *payment.ItemServiceReq, playerId string) ([]*payment.PaymentTransferRes, error)
 	}
 
 	paymentUsecase struct {
@@ -112,9 +115,10 @@ func (u *paymentUsecase) BuyOrSellItemConsumer(pctx context.Context, key string,
 		resCh <- nil
 		return
 	}
+	defer consumer.Close()
 
 	log.Println("Start BuyOrSellItemConsumer ...")
-
+	// Recieving A Message Here
 	select {
 	case err := <-consumer.Errors():
 		log.Printf("Error: BuyOrSellItemConsumer failed %s", err.Error())
@@ -138,15 +142,46 @@ func (u *paymentUsecase) BuyOrSellItemConsumer(pctx context.Context, key string,
 
 }
 
-func (u *paymentUsecase) BuyItem(pctx context.Context, cfg *config.Config, req *payment.ItemServiceReq, playerId string) (*payment.PaymentTransferRes, error) {
+func (u *paymentUsecase) BuyItem(pctx context.Context, cfg *config.Config, req *payment.ItemServiceReq, playerId string) ([]*payment.PaymentTransferRes, error) {
 
 	if err := u.FindItemsInIds(pctx, cfg.Grpc.ItemUrl, req.Items); err != nil {
 		return nil, err
 	}
-	return nil, nil
+
+	stage1 := make([]*payment.PaymentTransferRes, 0)
+	for _, item := range req.Items {
+		// ยิงไป
+		u.paymentRepository.DockedPlayerMoney(pctx, cfg, &player.CreatePlayerTransactionReq{
+			PlayerId: playerId,
+			Amount:   -item.Price,
+		})
+
+		// รับ response
+		resCh := make(chan *payment.PaymentTransferRes)
+		go u.BuyOrSellItemConsumer(pctx, "buy", cfg, resCh)
+
+		// รับ respones ทั้งหมดมา append ใส่ array
+		res := <-resCh
+		if res != nil {
+			log.Println(res)
+			stage1 = append(stage1, res)
+		}
+	}
+
+	for _, s1 := range stage1 {
+		if s1.Error != "" {
+			for _, ss1 := range stage1 {
+				u.paymentRepository.RollBackTransaction(pctx, cfg, &player.RollbackPlayerTransactionReq{
+					TransactionId: ss1.TransactionId,
+				})
+			}
+		}
+	}
+
+	return stage1, nil
 }
 
-func (u *paymentUsecase) SellItem(pctx context.Context, cfg *config.Config, req *payment.ItemServiceReq, playerId string) (*payment.PaymentTransferRes, error) {
+func (u *paymentUsecase) SellItem(pctx context.Context, cfg *config.Config, req *payment.ItemServiceReq, playerId string) ([]*payment.PaymentTransferRes, error) {
 
 	if err := u.FindItemsInIds(pctx, cfg.Grpc.ItemUrl, req.Items); err != nil {
 		return nil, err

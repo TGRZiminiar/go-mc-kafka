@@ -2,6 +2,7 @@ package playerRepository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/TGRZiminiar/go-mc-kafka/modules/models"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/payment"
 	"github.com/TGRZiminiar/go-mc-kafka/modules/player"
+	"github.com/TGRZiminiar/go-mc-kafka/pkg/queue"
 	"github.com/TGRZiminiar/go-mc-kafka/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -30,6 +32,7 @@ type (
 		FindOnePlayerProfileToRefresh(pctx context.Context, playerId string) (*player.Player, error)
 		DeleteOnePlayerTransaction(pctx context.Context, transactionId string) error
 		DockedPlayerMoneyRes(pctx context.Context, cfg *config.Config, req *payment.PaymentTransferRes) error
+		AddPlayerMoneyRes(pctx context.Context, cfg *config.Config, req *payment.PaymentTransferRes) error
 	}
 
 	playerRepository struct {
@@ -250,5 +253,27 @@ func (r *playerRepository) DeleteOnePlayerTransaction(pctx context.Context, tran
 	}
 
 	log.Printf("Delete Result: %v", result)
+	return nil
+}
+
+func (r *playerRepository) AddPlayerMoneyRes(pctx context.Context, cfg *config.Config, req *payment.PaymentTransferRes) error {
+	reqInBytes, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error: AddPlayerMoneyRes failed: %s", err.Error())
+		return errors.New("error: docked player money res failed")
+	}
+
+	if err := queue.PushMessageWithKeyToQueue(
+		[]string{cfg.Kafka.Url},
+		cfg.Kafka.ApiKey,
+		cfg.Kafka.Secret,
+		"payment",
+		"sell",
+		reqInBytes,
+	); err != nil {
+		log.Printf("Error: AddPlayerMoneyRes failed: %s", err.Error())
+		return errors.New("error: docked player money res failed")
+	}
+
 	return nil
 }

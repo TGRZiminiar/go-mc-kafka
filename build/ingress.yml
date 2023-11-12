@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-sekai-shop-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/app-root: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /auth_v1
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8080 // Port ที่ จะต่อเข้า Service
+      - path: /player_v1
+        pathType: Prefix
+        backend:
+          service:
+            name: player-service
+            port:
+              number: 8080 // Port ที่ จะต่อเข้า Service
+      - path: /item_v1
+        pathType: Prefix
+        backend:
+          service:
+            name: item-service
+            port:
+              number: 8080 // Port ที่ จะต่อเข้า Service
+      - path: /inventory_v1
+        pathType: Prefix
+        backend:
+          service:
+            name: inventory-service
+            port:
+              number: 8080 // Port ที่ จะต่อเข้า Service
+      - path: /payment_v1
+        pathType: Prefix
+        backend:
+          service:
+            name: payment-service
+            port:
+              number: 8080 // Port ที่ จะต่อเข้า Service

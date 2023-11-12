@@ -59,7 +59,6 @@ func (u *inventoryUsecase) FindPlayerItems(pctx context.Context, cfg *config.Con
 
 	opts = append(opts, options.Find().SetSort(bson.D{{"_id", 1}}))
 	opts = append(opts, options.Find().SetLimit(int64(req.Limit)))
-
 	// Find
 	inventoryData, err := u.inventoryRepository.FindPlayerItems(pctx, filter, opts)
 	if err != nil {
